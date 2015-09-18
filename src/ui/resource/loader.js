@@ -16,6 +16,7 @@
 
 import .i18n;
 import lib.Callback;
+import event.Emitter as Emitter;
 
 var _cache = {};
 
@@ -36,7 +37,7 @@ var MIME = {
 	'.wav': 'audio'
 };
 
-var Loader = Class(function () {
+var Loader = Class(Emitter, function () {
 
 	var globalItemsToLoad = 0;
 	var globalItemsLoaded = 0;
@@ -307,6 +308,7 @@ var Loader = Class(function () {
 	this._loadGroup = function (opts, cb) {
 		var timeout = opts.timeout;
 		var callback = new lib.Callback();
+		var that = this;
 
 		// compute a list of images using file extensions
 		var resources = opts.resources || [];
@@ -443,6 +445,11 @@ var Loader = Class(function () {
 					// Reset fail flag
 					res.failed = false;
 
+					// Let subscribers know an image was loaded
+					if (res instanceof Image) {
+						that.emit(Loader.IMAGE_LOADED, res);
+					}
+
 					// React to successful load of this resource
 					next(false);
 				};
@@ -479,4 +486,8 @@ var Loader = Class(function () {
 
 });
 
+Loader.IMAGE_LOADED = "imageLoaded";
+
 exports = new Loader();
+
+exports.IMAGE_LOADED = Loader.IMAGE_LOADED;
